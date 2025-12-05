@@ -16,8 +16,7 @@ from app.database import get_database
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # OAuth2 scheme
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api_prefix}/auth/login")
-
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api_prefix}/auth/login", auto_error=False)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify password against hash"""
