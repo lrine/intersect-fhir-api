@@ -8,7 +8,7 @@ INSTRUCTIONS:
 3. Update search parameters based on FHIR spec for that resource
 4. Import: from fhir.resources.organization import Organization
 """
-from fastapi import APIRouter, HTTPException, status, Query, Depends
+from fastapi import APIRouter, HTTPException, status, Query, Depends, Body
 from typing import List, Optional
 from fhir.resources.organization import Organization
 import uuid
@@ -19,28 +19,27 @@ from app.services.auth_service import get_current_active_user
 router = APIRouter()
 
 
-@router.post("/Organization", response_model=Organization, status_code=status.HTTP_201_CREATED)
+@router.post("/Organization", status_code=status.HTTP_201_CREATED)
 async def create_organization(
-    organization: Organization,
+    organization_data: dict = Body(...),
     current_user = Depends(get_current_active_user)
 ):
     """Create a new Organization resource"""
     db = get_database()
-    
-    if not organization.id:
-        organization.id = f"organization-{uuid.uuid4()}"
-    
-    existing = await db.Organization.find_one({"id": organization.id})
+
+    if not organization_data.get("id"):
+        organization_data["id"] = f"organization-{uuid.uuid4()}"
+
+    existing = await db.Organization.find_one({"id": organization_data["id"]})
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Organization with id {organization.id} already exists"
+            detail=f"Organization with id {organization_data['id']} already exists"
         )
-    
-    organization_dict = organization.dict()
-    await db.Organization.insert_one(organization_dict)
-    
-    return organization
+
+    await db.Organization.insert_one(organization_data)
+
+    return organization_data
 
 
 @router.get("/Organization/{organization_id}", response_model=Organization)
@@ -80,28 +79,27 @@ async def search_organizations(
     return [Organization(**r) for r in organizations]
 
 
-@router.put("/Organization/{organization_id}", response_model=Organization)
+@router.put("/Organization/{organization_id}")
 async def update_organization(
     organization_id: str,
-    organization: Organization,
+    organization_data: dict = Body(...),
     current_user = Depends(get_current_active_user)
 ):
     """Update an existing Organization resource"""
     db = get_database()
-    
+
     existing = await db.Organization.find_one({"id": organization_id})
     if not existing:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Organization with id {organization_id} not found"
         )
-    
-    organization.id = organization_id
-    organization_dict = organization.dict()
-    
-    await db.Organization.replace_one({"id": organization_id}, organization_dict)
-    
-    return organization
+
+    organization_data["id"] = organization_id
+
+    await db.Organization.replace_one({"id": organization_id}, organization_data)
+
+    return organization_data
 
 
 @router.delete("/Organization/{organization_id}", status_code=status.HTTP_204_NO_CONTENT)

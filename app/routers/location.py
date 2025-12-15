@@ -8,7 +8,7 @@ INSTRUCTIONS:
 3. Update search parameters based on FHIR spec for that resource
 4. Import: from fhir.resources.location import Location
 """
-from fastapi import APIRouter, HTTPException, status, Query, Depends
+from fastapi import APIRouter, HTTPException, status, Query, Depends, Body
 from typing import List, Optional
 from fhir.resources.location import Location
 import uuid
@@ -19,28 +19,27 @@ from app.services.auth_service import get_current_active_user
 router = APIRouter()
 
 
-@router.post("/Location", response_model=Location, status_code=status.HTTP_201_CREATED)
+@router.post("/Location", status_code=status.HTTP_201_CREATED)
 async def create_location(
-    location: Location,
+    location_data: dict = Body(...),
     current_user = Depends(get_current_active_user)
 ):
     """Create a new Location resource"""
     db = get_database()
-    
-    if not location.id:
-        location.id = f"location-{uuid.uuid4()}"
-    
-    existing = await db.Location.find_one({"id": location.id})
+
+    if not location_data.get("id"):
+        location_data["id"] = f"location-{uuid.uuid4()}"
+
+    existing = await db.Location.find_one({"id": location_data["id"]})
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Location with id {location.id} already exists"
+            detail=f"Location with id {location_data['id']} already exists"
         )
-    
-    location_dict = location.dict()
-    await db.Location.insert_one(location_dict)
-    
-    return location
+
+    await db.Location.insert_one(location_data)
+
+    return location_data
 
 
 @router.get("/Location/{location_id}", response_model=Location)
@@ -80,28 +79,27 @@ async def search_locations(
     return [Location(**r) for r in locations]
 
 
-@router.put("/Location/{location_id}", response_model=Location)
+@router.put("/Location/{location_id}")
 async def update_location(
     location_id: str,
-    location: Location,
+    location_data: dict = Body(...),
     current_user = Depends(get_current_active_user)
 ):
     """Update an existing Location resource"""
     db = get_database()
-    
+
     existing = await db.Location.find_one({"id": location_id})
     if not existing:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Location with id {location_id} not found"
         )
-    
-    location.id = location_id
-    location_dict = location.dict()
-    
-    await db.Location.replace_one({"id": location_id}, location_dict)
-    
-    return location
+
+    location_data["id"] = location_id
+
+    await db.Location.replace_one({"id": location_id}, location_data)
+
+    return location_data
 
 
 @router.delete("/Location/{location_id}", status_code=status.HTTP_204_NO_CONTENT)

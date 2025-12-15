@@ -2,7 +2,7 @@
 Patient Resource Router
 FHIR R6 Patient resource endpoints
 """
-from fastapi import APIRouter, HTTPException, status, Query, Depends
+from fastapi import APIRouter, HTTPException, status, Query, Depends, Body
 from typing import List, Optional
 from fhir.resources.patient import Patient
 from fhir.resources.bundle import Bundle, BundleEntry
@@ -14,35 +14,34 @@ from app.services.auth_service import get_current_active_user
 router = APIRouter()
 
 
-@router.post("/Patient", response_model=Patient, status_code=status.HTTP_201_CREATED)
+@router.post("/Patient", status_code=status.HTTP_201_CREATED)
 async def create_patient(
-    patient: Patient,
+    patient_data: dict = Body(...),
     current_user = Depends(get_current_active_user)
 ):
     """
     Create a new Patient resource
-    
+
     Creates a new patient record in the system.
     """
     db = get_database()
-    
+
     # Generate ID if not provided
-    if not patient.id:
-        patient.id = f"patient-{uuid.uuid4()}"
-    
+    if not patient_data.get("id"):
+        patient_data["id"] = f"patient-{uuid.uuid4()}"
+
     # Check if patient already exists
-    existing = await db.Patient.find_one({"id": patient.id})
+    existing = await db.Patient.find_one({"id": patient_data["id"]})
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=f"Patient with id {patient.id} already exists"
+            detail=f"Patient with id {patient_data['id']} already exists"
         )
-    
-    # Convert to dict and insert
-    patient_dict = patient.dict()
-    await db.Patient.insert_one(patient_dict)
-    
-    return patient
+
+    # Insert the patient data
+    await db.Patient.insert_one(patient_data)
+
+    return patient_data
 
 
 @router.get("/Patient/{patient_id}", response_model=Patient)
@@ -114,19 +113,19 @@ async def search_patients(
     return [Patient(**p) for p in patients]
 
 
-@router.put("/Patient/{patient_id}", response_model=Patient)
+@router.put("/Patient/{patient_id}")
 async def update_patient(
     patient_id: str,
-    patient: Patient,
+    patient_data: dict = Body(...),
     current_user = Depends(get_current_active_user)
 ):
     """
     Update an existing Patient resource
-    
+
     Replaces the entire patient resource with the provided data.
     """
     db = get_database()
-    
+
     # Check if patient exists
     existing = await db.Patient.find_one({"id": patient_id})
     if not existing:
@@ -134,14 +133,13 @@ async def update_patient(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Patient with id {patient_id} not found"
         )
-    
+
     # Update patient
-    patient.id = patient_id  # Ensure ID matches
-    patient_dict = patient.dict()
-    
-    await db.Patient.replace_one({"id": patient_id}, patient_dict)
-    
-    return patient
+    patient_data["id"] = patient_id  # Ensure ID matches
+
+    await db.Patient.replace_one({"id": patient_id}, patient_data)
+
+    return patient_data
 
 
 @router.delete("/Patient/{patient_id}", status_code=status.HTTP_204_NO_CONTENT)
