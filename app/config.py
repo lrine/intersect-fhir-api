@@ -3,6 +3,7 @@ Application Configuration
 Reads from environment variables and .env file
 """
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from typing import List
 import os
 
@@ -56,10 +57,12 @@ class Settings(BaseSettings):
     # External Services
     genomics_lab_api_url: str = ""
     genomics_lab_api_key: str = ""
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore"
+    )
 
 
 # Global settings instance
