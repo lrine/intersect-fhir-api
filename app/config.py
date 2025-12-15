@@ -23,13 +23,14 @@ class Settings(BaseSettings):
     port: int = 8000
     
     # MongoDB / Cosmos DB
-    mongodb_url: str
+    mongodb_url: str = "mongodb://localhost:27017"
     mongodb_database: str = "intersect_fhir"
     mongodb_min_pool_size: int = 10
     mongodb_max_pool_size: int = 100
-    
+
     # JWT Authentication
-    secret_key: str
+    # WARNING: Change secret_key in production! This default is for development only.
+    secret_key: str = "development-secret-key-change-in-production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     
