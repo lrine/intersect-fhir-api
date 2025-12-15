@@ -39,6 +39,9 @@ async def create_practitioner(
 
     await db.Practitioner.insert_one(practitioner_data)
 
+    # Remove MongoDB's _id field to avoid ObjectId serialization issues
+    practitioner_data.pop("_id", None)
+
     return practitioner_data
 
 

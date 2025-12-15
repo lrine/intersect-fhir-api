@@ -39,6 +39,9 @@ async def create_organization(
 
     await db.Organization.insert_one(organization_data)
 
+    # Remove MongoDB's _id field to avoid ObjectId serialization issues
+    organization_data.pop("_id", None)
+
     return organization_data
 
 

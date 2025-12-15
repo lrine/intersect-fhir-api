@@ -41,6 +41,9 @@ async def create_patient(
     # Insert the patient data
     await db.Patient.insert_one(patient_data)
 
+    # Remove MongoDB's _id field to avoid ObjectId serialization issues
+    patient_data.pop("_id", None)
+
     return patient_data
 
 

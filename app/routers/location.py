@@ -39,6 +39,9 @@ async def create_location(
 
     await db.Location.insert_one(location_data)
 
+    # Remove MongoDB's _id field to avoid ObjectId serialization issues
+    location_data.pop("_id", None)
+
     return location_data
 
 
