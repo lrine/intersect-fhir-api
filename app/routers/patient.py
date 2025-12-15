@@ -47,7 +47,7 @@ async def create_patient(
     return patient_data
 
 
-@router.get("/Patient/{patient_id}", response_model=Patient)
+@router.get("/Patient/{patient_id}")
 async def get_patient(
     patient_id: str,
     current_user = Depends(get_current_active_user)
@@ -60,17 +60,17 @@ async def get_patient(
     db = get_database()
     
     patient = await db.Patient.find_one({"id": patient_id}, {"_id": 0})
-    
+
     if not patient:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Patient with id {patient_id} not found"
         )
-    
-    return Patient(**patient)
+
+    return patient
 
 
-@router.get("/Patient", response_model=List[Patient])
+@router.get("/Patient")
 async def search_patients(
     name: Optional[str] = Query(None, description="Search by patient name"),
     family: Optional[str] = Query(None, description="Search by family name"),
@@ -112,8 +112,8 @@ async def search_patients(
     # Execute search with pagination
     cursor = db.Patient.find(query, {"_id": 0}).skip(_offset).limit(_count)
     patients = await cursor.to_list(length=_count)
-    
-    return [Patient(**p) for p in patients]
+
+    return patients
 
 
 @router.put("/Patient/{patient_id}")

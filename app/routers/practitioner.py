@@ -45,7 +45,7 @@ async def create_practitioner(
     return practitioner_data
 
 
-@router.get("/Practitioner/{practitioner_id}", response_model=Practitioner)
+@router.get("/Practitioner/{practitioner_id}")
 async def get_practitioner(
     practitioner_id: str,
     current_user = Depends(get_current_active_user)
@@ -54,17 +54,17 @@ async def get_practitioner(
     db = get_database()
     
     practitioner = await db.Practitioner.find_one({"id": practitioner_id}, {"_id": 0})
-    
+
     if not practitioner:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Practitioner with id {practitioner_id} not found"
         )
-    
-    return Practitioner(**practitioner)
+
+    return practitioner
 
 
-@router.get("/Practitioner", response_model=List[Practitioner])
+@router.get("/Practitioner")
 async def search_practitioners(
     _count: Optional[int] = Query(100, description="Number of results", le=1000),
     _offset: Optional[int] = Query(0, description="Offset for pagination"),
@@ -78,8 +78,8 @@ async def search_practitioners(
     
     cursor = db.Practitioner.find(query, {"_id": 0}).skip(_offset).limit(_count)
     practitioners = await cursor.to_list(length=_count)
-    
-    return [Practitioner(**r) for r in practitioners]
+
+    return practitioners
 
 
 @router.put("/Practitioner/{practitioner_id}")

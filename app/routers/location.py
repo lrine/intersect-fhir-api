@@ -45,7 +45,7 @@ async def create_location(
     return location_data
 
 
-@router.get("/Location/{location_id}", response_model=Location)
+@router.get("/Location/{location_id}")
 async def get_location(
     location_id: str,
     current_user = Depends(get_current_active_user)
@@ -54,17 +54,17 @@ async def get_location(
     db = get_database()
     
     location = await db.Location.find_one({"id": location_id}, {"_id": 0})
-    
+
     if not location:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Location with id {location_id} not found"
         )
-    
-    return Location(**location)
+
+    return location
 
 
-@router.get("/Location", response_model=List[Location])
+@router.get("/Location")
 async def search_locations(
     _count: Optional[int] = Query(100, description="Number of results", le=1000),
     _offset: Optional[int] = Query(0, description="Offset for pagination"),
@@ -78,8 +78,8 @@ async def search_locations(
     
     cursor = db.Location.find(query, {"_id": 0}).skip(_offset).limit(_count)
     locations = await cursor.to_list(length=_count)
-    
-    return [Location(**r) for r in locations]
+
+    return locations
 
 
 @router.put("/Location/{location_id}")

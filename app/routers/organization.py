@@ -45,7 +45,7 @@ async def create_organization(
     return organization_data
 
 
-@router.get("/Organization/{organization_id}", response_model=Organization)
+@router.get("/Organization/{organization_id}")
 async def get_organization(
     organization_id: str,
     current_user = Depends(get_current_active_user)
@@ -54,17 +54,17 @@ async def get_organization(
     db = get_database()
     
     organization = await db.Organization.find_one({"id": organization_id}, {"_id": 0})
-    
+
     if not organization:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Organization with id {organization_id} not found"
         )
-    
-    return Organization(**organization)
+
+    return organization
 
 
-@router.get("/Organization", response_model=List[Organization])
+@router.get("/Organization")
 async def search_organizations(
     _count: Optional[int] = Query(100, description="Number of results", le=1000),
     _offset: Optional[int] = Query(0, description="Offset for pagination"),
@@ -78,8 +78,8 @@ async def search_organizations(
     
     cursor = db.Organization.find(query, {"_id": 0}).skip(_offset).limit(_count)
     organizations = await cursor.to_list(length=_count)
-    
-    return [Organization(**r) for r in organizations]
+
+    return organizations
 
 
 @router.put("/Organization/{organization_id}")
