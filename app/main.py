@@ -97,11 +97,16 @@ app = FastAPI(
     - Documents: DocumentReference
     
     ### Authentication:
-    Use the `/api/v1/auth/login` endpoint to get a JWT token.
-    Then include the token in the Authorization header:
-    ```
-    Authorization: Bearer <your-token>
-    ```
+    Role-based authentication with JWT tokens.
+
+    **Roles:** admin, practitioner, nurse, scheduler, finance
+
+    1. Register: POST `/api/v1/auth/register` with email, password, role, first_name, last_name
+    2. Login: POST `/api/v1/auth/login` with email and password to get JWT token
+    3. Use token in requests: `Authorization: Bearer <your-token>`
+    4. Get profile: GET `/api/v1/auth/me`
+
+    Note: Patients access a separate patient portal
     """,
     version=settings.app_version,
     docs_url="/docs",
